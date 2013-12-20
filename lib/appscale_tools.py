@@ -23,7 +23,7 @@ from custom_exceptions import AppControllerException
 from custom_exceptions import AppEngineConfigException
 from custom_exceptions import AppScaleException
 from custom_exceptions import BadConfigurationException
-from eager_client import EagerClient
+from eager_helper import EagerHelper
 from local_state import APPSCALE_VERSION
 from local_state import LocalState
 from node_layout import NodeLayout
@@ -550,9 +550,6 @@ class AppScaleTools():
     userappclient = UserAppClient(userappserver_host, LocalState.get_secret_key(
       options.keyname))
 
-    eager = EagerClient(LocalState.get_login_host(options.keyname),
-      LocalState.get_secret_key(options.keyname))
-
     if options.test:
       username = LocalState.DEFAULT_USER
     elif options.email:
@@ -572,7 +569,10 @@ class AppScaleTools():
         ", so they can't upload an app with that application ID. Please " + \
         "change the application ID and try again.")
 
-    AppScaleLogger.log(str(eager.ping()))
+    valid = EagerHelper.perform_eager_validation(app_language, file_location, options.keyname)
+    if not valid:
+      AppScaleLogger.log('EAGER validation failed. Aborting app deployment!')
+      return
 
     if app_exists:
       AppScaleLogger.log("Uploading new version of app {0}".format(app_id))
