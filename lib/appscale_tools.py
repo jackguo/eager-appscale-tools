@@ -23,6 +23,7 @@ from custom_exceptions import AppControllerException
 from custom_exceptions import AppEngineConfigException
 from custom_exceptions import AppScaleException
 from custom_exceptions import BadConfigurationException
+from eager_client import EagerClient
 from local_state import APPSCALE_VERSION
 from local_state import LocalState
 from node_layout import NodeLayout
@@ -549,6 +550,9 @@ class AppScaleTools():
     userappclient = UserAppClient(userappserver_host, LocalState.get_secret_key(
       options.keyname))
 
+    eager = EagerClient(LocalState.get_login_host(options.keyname),
+      LocalState.get_secret_key(options.keyname))
+
     if options.test:
       username = LocalState.DEFAULT_USER
     elif options.email:
@@ -567,6 +571,8 @@ class AppScaleTools():
       raise AppScaleException("The given user doesn't own this application" + \
         ", so they can't upload an app with that application ID. Please " + \
         "change the application ID and try again.")
+
+    AppScaleLogger.log(str(eager.ping()))
 
     if app_exists:
       AppScaleLogger.log("Uploading new version of app {0}".format(app_id))
