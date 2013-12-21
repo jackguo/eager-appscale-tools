@@ -14,7 +14,7 @@ class APISpec:
     api_spec_file.close()
     swagger_version = api_spec.get('swaggerVersion')
     if swagger_version != '1.2':
-      raise EagerException('Invalid swagger version: {0}'.format(swagger_version))
+      raise EagerException('Invalid swagger version: {0} in {1}'.format(swagger_version, api_spec_path))
     self.name = api_spec['apiName']
     self.version = api_spec['apiVersion']
 
@@ -34,10 +34,17 @@ class EagerHelper:
       if api_info:
         eager = EagerClient(LocalState.get_login_host(keyname),
           LocalState.get_secret_key(keyname))
+        error_occurred = False
         for api in api_info:
           AppScaleLogger.log('Found API specification for API: {0}-v{1}'.format(api.name, api.version))
           validation_result = eager.validate_api_for_deployment(api.to_dict())
-          AppScaleLogger.log(str(validation_result))
+          if validation_result['success']:
+            AppScaleLogger.success('API {0}-v{1} validated successfully'.format(api.name, api.version))
+          else:
+            AppScaleLogger.warn('API {0}-v{1} validation failed'.format(api.name, api.version))
+            error_occurred = True
+        if error_occurred:
+          return False
     return True
 
   @classmethod

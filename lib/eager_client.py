@@ -75,7 +75,7 @@ class EagerClient:
     return ret_val
 
   def handle_exception(self, ex, reason):
-    ret_val = { 'status' : False, 'reason' : reason, 'detail' : ex }
+    ret_val = { 'success' : False, 'reason' : reason, 'detail' : ex }
     return ret_val
 
   def ping(self):

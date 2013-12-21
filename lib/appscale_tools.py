@@ -570,8 +570,10 @@ class AppScaleTools():
         "change the application ID and try again.")
 
     valid = EagerHelper.perform_eager_validation(app_language, file_location, options.keyname)
-    if not valid:
-      AppScaleLogger.log('EAGER validation failed. Aborting app deployment!')
+    if valid:
+      AppScaleLogger.success('EAGER validation was successful. Continuing with the deployment.')
+    else:
+      AppScaleLogger.warn('EAGER validation failed. Aborting app deployment!')
       return
 
     if app_exists:
