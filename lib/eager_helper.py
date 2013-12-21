@@ -36,12 +36,12 @@ class EagerHelper:
           LocalState.get_secret_key(keyname))
         error_occurred = False
         for api in api_info:
-          AppScaleLogger.log('Found API specification for API: {0}-v{1}'.format(api.name, api.version))
+          AppScaleLogger.log('Found specification for API: {0}-v{1}'.format(api.name, api.version))
           validation_result = eager.validate_api_for_deployment(api.to_dict())
           if validation_result['success']:
-            AppScaleLogger.success('API {0}-v{1} validated successfully'.format(api.name, api.version))
+            AppScaleLogger.log('API {0}-v{1} validated successfully'.format(api.name, api.version))
           else:
-            AppScaleLogger.warn('API {0}-v{1} validation failed'.format(api.name, api.version))
+            AppScaleLogger.log('API {0}-v{1} validation failed'.format(api.name, api.version))
             error_occurred = True
         if error_occurred:
           return False
