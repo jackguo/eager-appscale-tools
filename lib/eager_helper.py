@@ -12,7 +12,7 @@ class APISpec:
     api_spec_file = open(api_spec_path, 'r')
     api_spec = json.load(api_spec_file)
     api_spec_file.close()
-    swagger_version = api_spec.get('apiVersion')
+    swagger_version = api_spec.get('swaggerVersion')
     if swagger_version != '1.2':
       raise EagerException('Invalid swagger version: {0}'.format(swagger_version))
     self.name = api_spec['apiName']
