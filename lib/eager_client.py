@@ -81,3 +81,7 @@ class EagerClient:
   def ping(self):
     return self.run_with_timeout(10, self.DEFAULT_NUM_RETRIES,
       self.server.ping, self.secret)
+
+  def validate_api_for_deployment(self, api):
+    return self.run_with_timeout(10, self.DEFAULT_NUM_RETRIES,
+      self.server.validate_api_for_deployment, self.secret, api)
