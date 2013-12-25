@@ -42,6 +42,9 @@ class EagerHelper:
             AppScaleLogger.log('API {0}-v{1} validated successfully'.format(api.name, api.version))
           else:
             AppScaleLogger.log('API {0}-v{1} validation failed'.format(api.name, api.version))
+            AppScaleLogger.warn(validation_result['reason'])
+            if validation_result.get('detail'):
+              AppScaleLogger.warn(validation_result['detail'])
             error_occurred = True
         if error_occurred:
           return False
