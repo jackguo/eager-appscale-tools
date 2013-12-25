@@ -41,6 +41,9 @@ class RemoteHelper():
   # The port the AppDashboard runs on, by default.
   APP_DASHBOARD_PORT = 1080
 
+  # The port on which EAGER service is running.
+  EAGER_PORT = 18444
+
 
   # The default port that the ssh daemon runs on.
   SSH_PORT = 22
