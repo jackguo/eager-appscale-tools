@@ -282,13 +282,15 @@ class RemoteHelper():
     Returns:
       True if the port is open, False otherwise.
     """
+    port_open = False
     try:
       sock = socket.socket()
       sock.connect((host, port))
-      return True
+      port_open = True
+      sock.close()
     except Exception as exception:
       AppScaleLogger.verbose(str(exception), is_verbose)
-      return False
+    return port_open
 
 
   @classmethod
