@@ -17,11 +17,13 @@ class APISpec:
       raise EagerException('Invalid swagger version: {0} in {1}'.format(swagger_version, api_spec_path))
     self.name = api_spec['apiName']
     self.version = api_spec['apiVersion']
+    self.specification = api_spec
 
   def to_dict(self):
     result = {
       'name' : self.name,
-      'version' : self.version
+      'version' : self.version,
+      'specification' : self.specification
     }
     return result
 
