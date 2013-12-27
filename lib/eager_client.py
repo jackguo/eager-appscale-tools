@@ -68,7 +68,7 @@ class EagerClient:
       else:
         return self.handle_exception(exception, 'Socket error')
     except Exception as exception:
-      return self.handle_exception(exception, 'Unexpected client error')
+      return self.handle_exception(exception, 'Unexpected runtime error')
     finally:
       signal.alarm(0)  # turn off the alarm
 
