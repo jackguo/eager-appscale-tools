@@ -43,7 +43,7 @@ class EagerHelper:
         AppScaleLogger.log('API {0}-v{1} validation failed'.format(api.name, api.version))
         AppScaleLogger.warn(validation_result['reason'])
         if validation_result.get('detail'):
-          AppScaleLogger.warn(validation_result['detail'])
+          AppScaleLogger.warn(str(validation_result['detail']))
         error_occurred = True
     return not error_occurred
 
@@ -71,5 +71,6 @@ class EagerHelper:
       AppScaleLogger.log('API {0}-v{1} published to API store.'.format(api.name, api.version))
     else:
       AppScaleLogger.log('Failed to publish API {0}-v{1}.'.format(api.name, api.version))
+      AppScaleLogger.warn(result['reason'])
       if result.get('detail'):
-        AppScaleLogger.warn(result['detail'])
+        AppScaleLogger.warn(str(result['detail']))
