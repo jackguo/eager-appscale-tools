@@ -85,3 +85,7 @@ class EagerClient:
   def validate_api_for_deployment(self, api):
     return self.run_with_timeout(10, self.DEFAULT_NUM_RETRIES,
       self.server.validate_api_for_deployment, self.secret, api)
+
+  def publish_api(self, api, url):
+    return self.run_with_timeout(10, self.DEFAULT_NUM_RETRIES,
+      self.server.publish_api, self.secret, api, url)

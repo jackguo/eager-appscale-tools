@@ -571,12 +571,14 @@ class AppScaleTools():
         ", so they can't upload an app with that application ID. Please " + \
         "change the application ID and try again.")
 
-    valid = EagerHelper.perform_eager_validation(app_language, file_location, options.keyname)
-    if valid:
-      AppScaleLogger.success('EAGER validation was successful. Continuing with the deployment.')
-    else:
-      AppScaleLogger.warn('EAGER validation failed. Aborting app deployment!')
-      return
+    api_info = EagerHelper.get_api_info(app_language, file_location)
+    if api_info:
+      valid = EagerHelper.perform_eager_validation(api_info, options.keyname)
+      if valid:
+        AppScaleLogger.success('EAGER validation was successful. Continuing with the deployment.')
+      else:
+        AppScaleLogger.warn('EAGER validation failed. Aborting app deployment!')
+        return
 
     if app_exists:
       AppScaleLogger.log("Uploading new version of app {0}".format(app_id))
@@ -601,8 +603,14 @@ class AppScaleTools():
       options.keyname)
     RemoteHelper.sleep_until_port_is_open(serving_host, serving_port,
       options.verbose)
+
+    app_url = "http://{0}:{1}".format(serving_host, serving_port)
+    if api_info:
+      for api in api_info:
+        EagerHelper.publish_api(api, app_url, options.keyname)
+
     AppScaleLogger.success("Your app can be reached at the following URL: " +
-      "http://{0}:{1}".format(serving_host, serving_port))
+      app_url)
 
     if created_dir:
       shutil.rmtree(file_location)
