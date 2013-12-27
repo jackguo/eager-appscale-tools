@@ -23,7 +23,8 @@ class APISpec:
     result = {
       'name' : self.name,
       'version' : self.version,
-      'specification' : self.specification
+      'specification' : self.specification,
+      'dependencies' : []
     }
     return result
 
