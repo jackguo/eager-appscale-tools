@@ -45,8 +45,8 @@ class EagerHelper:
       else:
         AppScaleLogger.log('API {0}-v{1} validation failed'.format(api.name, api.version))
         AppScaleLogger.warn(validation_result['reason'])
-        if validation_result.get('detail'):
-          AppScaleLogger.warn(str(validation_result['detail']))
+        if hasattr(validation_result, 'detail'):
+          AppScaleLogger.warn(str(validation_result.detail))
         error_occurred = True
     return not error_occurred
 
@@ -79,7 +79,7 @@ class EagerHelper:
 
   @classmethod
   def validate_dependencies(cls, dependencies):
-    for key,value in dependencies:
+    for key,value in dependencies.items():
       if not isinstance(value, list):
         raise EagerException('Entry {0} of dependencies.yaml is invalid'.format(key))
       for item in value:
