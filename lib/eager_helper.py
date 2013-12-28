@@ -1,5 +1,6 @@
 import json
 import os
+import yaml
 from appscale_logger import AppScaleLogger
 from eager_client import EagerClient
 from local_state import LocalState
@@ -18,13 +19,14 @@ class APISpec:
     self.name = api_spec['apiName']
     self.version = api_spec['apiVersion']
     self.specification = api_spec
+    self.dependencies = []
 
   def to_dict(self):
     result = {
       'name' : self.name,
       'version' : self.version,
       'specification' : self.specification,
-      'dependencies' : []
+      'dependencies' : self.dependencies
     }
     return result
 
@@ -53,15 +55,40 @@ class EagerHelper:
     if app_language != 'java':
       return None
     api_specs_dir = app_dir + os.sep + 'war' + os.sep + 'WEB-INF' + os.sep + 'specs'
+    dependencies_path = app_dir + os.sep + 'war' + os.sep + 'WEB-INF' + os.sep + 'dependencies.yaml'
+
+    dependencies = {}
+    if os.path.exists(dependencies_path):
+      dependencies_file = open(dependencies_path, 'r')
+      dependencies = yaml.load(dependencies_file)
+      dependencies_file.close()
+      EagerHelper.validate_dependencies(dependencies)
+
     if os.path.exists(api_specs_dir):
       api_info = []
       for f in os.listdir(api_specs_dir):
         if f.endswith('.json'):
           api_spec = APISpec(api_specs_dir + os.sep + f)
+          api_dependencies = dependencies.get(api_spec.name + '_' + api_spec.version)
+          if api_dependencies:
+            api_spec.dependencies = api_dependencies
           api_info.append(api_spec)
       if api_info:
         return api_info
     return None
+
+  @classmethod
+  def validate_dependencies(cls, dependencies):
+    for key,value in dependencies:
+      if not isinstance(value, list):
+        raise EagerException('Entry {0} of dependencies.yaml is invalid'.format(key))
+      for item in value:
+        if not isinstance(item, dict):
+          raise EagerException('Entry {0} of dependencies.yaml is invalid'.format(key))
+        if not item.get('name'):
+          raise EagerException('Missing name attribute in the dependency for: {0}'.format(key))
+        if not item.get('version'):
+          raise EagerException('Missing version attribute in the dependency for: {0}'.format(key))
 
   @classmethod
   def publish_api(cls, api, url, keyname):
