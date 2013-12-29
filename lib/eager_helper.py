@@ -41,12 +41,14 @@ class EagerHelper:
       AppScaleLogger.log('Found specification for API: {0}-v{1}'.format(api.name, api.version))
       validation_result = eager.validate_api_for_deployment(api.to_dict())
       if validation_result['success']:
-        AppScaleLogger.log('API {0}-v{1} validated successfully'.format(api.name, api.version))
+        AppScaleLogger.log('API {0}-v{1} validated successfully.'.format(api.name, api.version))
       else:
-        AppScaleLogger.log('API {0}-v{1} validation failed'.format(api.name, api.version))
-        AppScaleLogger.warn(validation_result['reason'])
+        AppScaleLogger.log('API {0}-v{1} validation failed.'.format(api.name, api.version))
         if hasattr(validation_result, 'detail'):
-          AppScaleLogger.warn(str(validation_result.detail))
+          AppScaleLogger.warn('{0}: {1}'.format(validation_result['reason'],
+            str(validation_result.detail)))
+        else:
+          AppScaleLogger.warn(validation_result['reason'])
         error_occurred = True
     return not error_occurred
 
