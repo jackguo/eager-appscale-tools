@@ -70,7 +70,10 @@ class EagerHelper:
       dependencies_file = open(dependencies_path, 'r')
       dependencies = yaml.load(dependencies_file)
       dependencies_file.close()
-      EagerHelper.validate_dependencies(dependencies)
+      if dependencies is None:
+        dependencies = {}
+      else:
+        EagerHelper.validate_dependencies(dependencies)
 
     if os.path.exists(api_specs_dir):
       api_info = []
