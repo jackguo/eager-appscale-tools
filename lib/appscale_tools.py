@@ -439,6 +439,7 @@ class AppScaleTools():
     RemoteHelper.sleep_until_port_is_open(LocalState.get_login_host(
       options.keyname), RemoteHelper.APP_DASHBOARD_PORT, options.verbose)
     AppScaleLogger.log("Waiting for EAGER services to start up...")
+    AppScaleLogger.log("This could take a couple of minutes - \"Drem los aan pruziig\" (http://www.thuum.org/dictionary.php)")
     RemoteHelper.sleep_until_port_is_open(public_ip, RemoteHelper.EAGER_PORT, options.verbose)
     AppScaleLogger.success("AppScale successfully started!")
     AppScaleLogger.success("View status information about your AppScale " + \
