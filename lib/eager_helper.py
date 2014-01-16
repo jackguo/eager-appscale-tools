@@ -9,7 +9,7 @@ class EagerException(Exception):
   pass
 
 class APISpec:
-  def __init__(self, api_spec_path):
+  def __init__(self, api_spec_path, username):
     api_spec_file = open(api_spec_path, 'r')
     api_spec = json.load(api_spec_file)
     api_spec_file.close()
@@ -20,13 +20,15 @@ class APISpec:
     self.version = api_spec['apiVersion']
     self.specification = api_spec
     self.dependencies = []
+    self.username = username
 
   def to_dict(self):
     result = {
       'name' : self.name,
       'version' : self.version,
       'specification' : self.specification,
-      'dependencies' : self.dependencies
+      'dependencies' : self.dependencies,
+      'username' : self.username
     }
     return result
 
@@ -59,7 +61,7 @@ class EagerHelper:
     return not error_occurred
 
   @classmethod
-  def get_api_info(cls, app_language, app_dir):
+  def get_api_info(cls, app_language, app_dir, username):
     if app_language != 'java':
       return None
     api_specs_dir = app_dir + os.sep + 'war' + os.sep + 'WEB-INF' + os.sep + 'specs'
@@ -79,7 +81,7 @@ class EagerHelper:
       api_info = []
       for f in os.listdir(api_specs_dir):
         if f.endswith('.json'):
-          api_spec = APISpec(api_specs_dir + os.sep + f)
+          api_spec = APISpec(api_specs_dir + os.sep + f, username)
           api_dependencies = dependencies.get(api_spec.name + '_' + api_spec.version)
           if api_dependencies:
             api_spec.dependencies = api_dependencies

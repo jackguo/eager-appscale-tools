@@ -572,7 +572,7 @@ class AppScaleTools():
         ", so they can't upload an app with that application ID. Please " + \
         "change the application ID and try again.")
 
-    api_info = EagerHelper.get_api_info(app_language, file_location)
+    api_info = EagerHelper.get_api_info(app_language, file_location, username)
     if api_info:
       valid = EagerHelper.perform_eager_validation(api_info, options.keyname)
       if valid:
