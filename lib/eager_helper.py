@@ -17,6 +17,18 @@ class Application:
     self.dependencies = []
     self.api_list = []
 
+  def to_dict(self):
+    result = {
+      'name' : self.name,
+      'version' : self.version,
+      'owner' : self.owner,
+      'dependencies' : self.dependencies,
+      'api_list' : []
+    }
+    for api in self.api_list:
+      result['api_list'].append(api.to_dict())
+    return result
+
 class API:
   def __init__(self, api_spec_path):
     api_spec_file = open(api_spec_path, 'r')
@@ -44,7 +56,7 @@ class EagerHelper:
     eager = EagerClient(LocalState.get_login_host(keyname),
       LocalState.get_secret_key(keyname))
     AppScaleLogger.log('Running EAGER validations for application.')
-    errors = eager.validate_application_for_deployment(app)
+    errors = eager.validate_application_for_deployment(app.to_dict())
     if errors:
       AppScaleLogger.log('Validation errors encountered:')
       for e in errors:
