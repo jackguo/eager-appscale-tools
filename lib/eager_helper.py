@@ -59,7 +59,7 @@ class EagerHelper:
     result = eager.validate_application_for_deployment(app.to_dict())
     if not result['success']:
       AppScaleLogger.log('Validation errors encountered: {0}'.format(result['reason']))
-      if result.get('detail'):
+      if hasattr(result, 'detail'):
         errors = result['detail'].split('|')
         AppScaleLogger.log('Following error details are available:')
         for e in errors:
