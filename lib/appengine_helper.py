@@ -31,6 +31,8 @@ class AppEngineHelper():
   # A regular expression that can be used to find an appid in a XML file.
   JAVA_APP_ID_REGEX = re.compile('<application>([\w\d-]+)<\/application>')
 
+  JAVA_APP_VERSION_REGEX = re.compile('<version>(.+)<\/version>')
+
 
   # A list of language runtimes that App Engine apps can be written in.
   ALLOWED_RUNTIMES = ("python27", "java", "go", "php")
@@ -163,6 +165,36 @@ class AppEngineHelper():
       else:
         raise AppEngineConfigException("No application id set in your " + \
           "appengine-web.xml")
+
+  @classmethod
+  def get_app_version_from_app_config(cls, app_dir):
+    """Checks the configuration file packages with the given App Engine app to
+    determine what the user has set as this application's version.
+
+    Args:
+      app_dir: The directory on the local filesystem where the App Engine
+        application can be found.
+    Returns:
+      A str indicating the application version for this application.
+    Raises:
+      AppEngineConfigException: If there is no application version set for this
+        application.
+    """
+    app_config_file = cls.get_config_file_from_dir(app_dir)
+    if cls.FILE_IS_YAML.search(app_config_file):
+      yaml_contents = yaml.safe_load(cls.read_file(app_config_file))
+      if 'version' in yaml_contents and yaml_contents['version'] != '':
+        return yaml_contents['version']
+      else:
+        raise AppEngineConfigException("No application version set in your app.yaml")
+    else:
+      xml_contents = cls.read_file(app_config_file)
+      app_id_matchdata = cls.JAVA_APP_VERSION_REGEX.search(xml_contents)
+      if app_id_matchdata:
+        return app_id_matchdata.group(1)
+      else:
+        raise AppEngineConfigException("No application id set in your " +\
+                                       "appengine-web.xml")
 
 
   @classmethod

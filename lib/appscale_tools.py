@@ -572,14 +572,13 @@ class AppScaleTools():
         ", so they can't upload an app with that application ID. Please " + \
         "change the application ID and try again.")
 
-    api_info = EagerHelper.get_api_info(app_language, file_location, username)
-    if api_info:
-      valid = EagerHelper.perform_eager_validation(api_info, options.keyname)
-      if valid:
-        AppScaleLogger.success('EAGER validation was successful. Continuing with the deployment.')
-      else:
-        AppScaleLogger.warn('EAGER validation failed. Aborting app deployment!')
-        return
+    eager_app = EagerHelper.get_application_info(username, app_language, file_location)
+    valid = EagerHelper.perform_eager_validation(eager_app, options.keyname)
+    if valid:
+      AppScaleLogger.success('EAGER validation was successful. Continuing with the deployment.')
+    else:
+      AppScaleLogger.warn('EAGER validation failed. Aborting app deployment!')
+      return
 
     if app_exists:
       AppScaleLogger.log("Uploading new version of app {0}".format(app_id))
@@ -606,9 +605,8 @@ class AppScaleTools():
       options.verbose)
 
     app_url = "http://{0}:{1}".format(serving_host, serving_port)
-    if api_info:
-      for api in api_info:
-        EagerHelper.publish_api(api, app_url, options.keyname)
+    for api in eager_app.api_list:
+      EagerHelper.publish_api(api, app_url, options.keyname)
 
     AppScaleLogger.success("Your app can be reached at the following URL: " +
       app_url)
