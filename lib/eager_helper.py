@@ -56,12 +56,15 @@ class EagerHelper:
     eager = EagerClient(LocalState.get_login_host(keyname),
       LocalState.get_secret_key(keyname))
     AppScaleLogger.log('Running EAGER validations for application.')
-    errors = eager.validate_application_for_deployment(app.to_dict())
-    if errors:
-      AppScaleLogger.log('Validation errors encountered:')
-      for e in errors:
-        AppScaleLogger.log('  * {0}'.format(e))
-    return not errors
+    result = eager.validate_application_for_deployment(app.to_dict())
+    if not result['success']:
+      AppScaleLogger.log('Validation errors encountered: {0}'.format(result['reason']))
+      if result.get('detail'):
+        errors = result['detail'].split('|')
+        AppScaleLogger.log('Following error details are available:')
+        for e in errors:
+          AppScaleLogger.log('  * {0}'.format(e))
+    return result['success']
 
   @classmethod
   def get_application_info(cls, owner, app_language, app_dir):
