@@ -440,6 +440,9 @@ Available commands:
     if 'verbose' in contents_as_yaml and contents_as_yaml['verbose'] == True:
       command.append("--verbose")
 
+    if 'disable_eager' in contents_as_yaml and contents_as_yaml['disable_eager'] == True:
+      command.append("--disable_eager")
+
     command.append("--file")
     command.append(app)
 
