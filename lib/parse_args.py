@@ -294,6 +294,9 @@ class ParseArgs():
       self.parser.add_argument('--test', action='store_true',
         default=False,
         help="uses a default username and password for cloud admin")
+      self.parser.add_argument('--disable_eager', action='store_true',
+        default=False,
+        help="disable EAGER enforced governance features")
       self.parser.add_argument('--email',
         help="the e-mail address to use as the app's admin")
     elif function == "appscale-terminate-instances":
