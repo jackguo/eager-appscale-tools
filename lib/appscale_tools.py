@@ -612,7 +612,7 @@ class AppScaleTools():
       options.verbose)
 
     app_url = "http://{0}:{1}".format(serving_host, serving_port)
-    if eager_enabled:
+    if eager_enabled and eager_app.api_list:
       t3 = time.time()
       EagerHelper.publish_api_list(eager_app.api_list, app_url, options.keyname)
       t4 = time.time()
