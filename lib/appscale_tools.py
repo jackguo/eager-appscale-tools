@@ -575,7 +575,9 @@ class AppScaleTools():
 
     eager_app = None
     eager_enabled = not options.disable_eager
+    t1 = t2 = t3 = t4 = 0
     if eager_enabled:
+      t1 = time.time()
       eager_app = EagerHelper.get_application_info(username, app_language, file_location)
       valid = EagerHelper.perform_eager_validation(eager_app, options.keyname)
       if valid:
@@ -583,6 +585,7 @@ class AppScaleTools():
       else:
         AppScaleLogger.warn('EAGER validation failed. Aborting app deployment!')
         return
+      t2 = time.time()
 
     if app_exists:
       AppScaleLogger.log("Uploading new version of app {0}".format(app_id))
@@ -610,7 +613,9 @@ class AppScaleTools():
 
     app_url = "http://{0}:{1}".format(serving_host, serving_port)
     if eager_enabled:
+      t3 = time.time()
       EagerHelper.publish_api_list(eager_app.api_list, app_url, options.keyname)
+      t4 = time.time()
 
     AppScaleLogger.success("Your app can be reached at the following URL: " +
       app_url)
@@ -620,4 +625,5 @@ class AppScaleTools():
 
     end_time = time.time()
     AppScaleLogger.log("Time elapsed: {0} ms".format((end_time - start_time) * 1000))
+    AppScaleLogger.log("Time spent on EAGER: {0} ms".format((t2 - t1 + t4 - t3) * 1000))
     return (serving_host, serving_port)
