@@ -108,14 +108,16 @@ class EagerHelper:
         raise EagerException('Missing version attribute in the dependency')
 
   @classmethod
-  def publish_api(cls, api, url, keyname):
+  def publish_api_list(cls, api_list, url, keyname):
     eager = EagerClient(LocalState.get_login_host(keyname),
       LocalState.get_secret_key(keyname))
-    result = eager.publish_api(api.to_dict(), url)
+    temp_api_list = []
+    for api in api_list:
+      temp_api_list.append(api.to_dict())
+    result = eager.publish_api_list(temp_api_list, url)
     if result['success']:
-      AppScaleLogger.log('API {0}-v{1} published to API store.'.format(api.name, api.version))
+      AppScaleLogger.log('{0} APIs published to API store.'.format(len(api_list)))
     else:
-      AppScaleLogger.log('Failed to publish API {0}-v{1}.'.format(api.name, api.version))
       AppScaleLogger.warn(result['reason'])
       if result.get('detail'):
         AppScaleLogger.warn(str(result['detail']))

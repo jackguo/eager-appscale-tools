@@ -610,8 +610,7 @@ class AppScaleTools():
 
     app_url = "http://{0}:{1}".format(serving_host, serving_port)
     if eager_enabled:
-      for api in eager_app.api_list:
-        EagerHelper.publish_api(api, app_url, options.keyname)
+      EagerHelper.publish_api_list(eager_app.api_list, app_url, options.keyname)
 
     AppScaleLogger.success("Your app can be reached at the following URL: " +
       app_url)
