@@ -584,6 +584,9 @@ class AppScaleTools():
         AppScaleLogger.success('EAGER validation was successful. Continuing with the deployment.')
       else:
         AppScaleLogger.warn('EAGER validation failed. Aborting app deployment!')
+        end_time = time.time()
+        AppScaleLogger.log("Time elapsed: {0} ms".format((end_time - start_time) * 1000))
+        AppScaleLogger.log("Time spent on EAGER: {0} ms".format((end_time - t1) * 1000))
         return
       t2 = time.time()
 
