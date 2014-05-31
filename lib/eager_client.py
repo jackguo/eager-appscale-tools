@@ -89,3 +89,23 @@ class EagerClient:
   def publish_api_list(self, api_list, url):
     return self.run_with_timeout(30, self.DEFAULT_NUM_RETRIES,
       self.server.publish_api_list, self.secret, api_list, url)
+
+  def add_policy(self, name, content, active):
+    return self.run_with_timeout(30, self.DEFAULT_NUM_RETRIES, self.server.add_policy, self.secret, name, content, active)
+
+  def remove_policy(self, name):
+    return self.run_with_timeout(30, self.DEFAULT_NUM_RETRIES, self.server.remove_policy, self.secret, name)
+
+  def enable_policy(self, name):
+    return self.run_with_timeout(30, self.DEFAULT_NUM_RETRIES, self.server.enable_policy, self.secret, name)
+
+  def disable_policy(self, name):
+    return self.run_with_timeout(30, self.DEFAULT_NUM_RETRIES, self.server.disable_policy, self.secret, name)
+
+  def list_policy(self, status):
+    return self.run_with_timeout(30, self.DEFAULT_NUM_RETRIES, self.server.list_policy, self.secret, status)
+
+  def info_policy(self, name):
+    return self.run_with_timeout(30, self.DEFAULT_NUM_RETRIES, self.server.info_policy, self.secret, name)
+
+

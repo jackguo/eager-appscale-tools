@@ -1,0 +1,52 @@
+#!/usr/bin/env python
+# Programmer: Chris Bunch (chris@appscale.com)
+
+
+# General-purpose Python library imports
+import os
+import sys
+import traceback
+
+
+# AppScale library imports
+lib = os.path.dirname(__file__) + os.sep + "lib"
+sys.path.append(lib)
+
+
+# Make sure we're on Python 2.6 or greater before importing any code
+# that's incompatible with older versions.
+import version_helper
+version_helper.ensure_valid_python_is_used()
+
+
+from eager_client  import EagerClient
+from remote_helper import RemoteHelper
+from local_state import LocalState
+
+
+if __name__ == "__main__":
+
+#  options = ParseArgs(sys.argv[1:], "appscale-run-instances").args
+#  try:
+#    AppScaleTools.run_instances(options)
+#    sys.exit(0)
+#  except Exception, e:
+#    LocalState.generate_crash_log(e, traceback.format_exc())
+  content =  "import re\n\n'''\nregex = re.compile('[A-Z].*')\nassert_true(regex.match(app.name), 'Application names must start with an uppercase letter')\n'''\n\nregex = re.compile('admin@test.com')\nassert_true(regex.match(app.owner), 'Application username must match admin@test.com')\n\nregex = re.compile('[A-Z].*')\nfor api in app.api_list:\n  assert_true(regex.match(api.name), 'API names must start with an uppercase letter')\n"
+  key_name = "appscalec946bb83dae24286b89cd108ce60e5b8"
+  eager = EagerClient(LocalState.get_login_host(key_name), LocalState.get_secret_key(key_name))
+  print eager.ping()
+  print eager.list_policy('active')
+  print eager.info_policy('basic')
+
+  print eager.disable_policy('basic')
+  print eager.list_policy('inactive')
+  print eager.enable_policy('basic')
+  print eager.list_policy('active')
+
+  print eager.add_policy('basic2', content, False)
+  print eager.list_policy('all')
+  print eager.info_policy('basic2')
+  #print eager.remove_policy('basic2')
+  #print eager.list_policy('all')
+  sys.exit(0)
