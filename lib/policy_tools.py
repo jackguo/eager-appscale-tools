@@ -209,7 +209,7 @@ Available commands:
       print "unknown command: {0}".format(options.cmd_name)
       print self.USAGE
       return
-    print "usage " + self.SUPPORT_CMDS[options.cmd_name]
+    print "usage: " + self.SUPPORT_CMDS[options.cmd_name]
 
   def remote_list(self, status):
     out = self.ssh("ls " + self.POLICY_DIR)
