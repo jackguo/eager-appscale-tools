@@ -1,0 +1,41 @@
+#!/usr/bin/env python
+# Programmer: junsheng(junsheng.guo90@gmail.com)
+
+
+# General-purpose Python library imports
+import os
+import sys
+import argparse
+
+# AppScale library imports
+lib = os.path.dirname(__file__) + os.sep + ".." + os.sep + "lib"
+sys.path.append(lib)
+
+# Make sure we're on Python 2.6 or greater before importing any code
+# that's incompatible with older versions.
+import version_helper
+version_helper.ensure_valid_python_is_used()
+
+from policy_tools import PolicyTools
+
+if __name__ == "__main__":
+
+  parser = argparse.ArgumentParser(usage=PolicyTools.USAGE)
+  parser.add_argument('command', nargs='?')
+  parser.add_argument('subargs', nargs=argparse.REMAINDER)
+  options = parser.parse_args()
+
+  if options.command not in PolicyTools.SUPPORT_CMDS.keys():
+    parser.print_usage()
+    sys.exit(0)
+
+  policy_tools = PolicyTools()
+
+  call = getattr(policy_tools, options.command)
+  call(options.subargs)
+
+#  print policy_tools.remote_list('active')
+#  policy_tools.info(["basic2"])
+#  policy_tools.remove(["test"])
+#  print str(options.subargs)
+  sys.exit(0)
