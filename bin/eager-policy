@@ -24,7 +24,7 @@ if __name__ == "__main__":
   parser.add_argument('subargs', nargs=argparse.REMAINDER)
   options = parser.parse_args()
 
-  if options.command not in PolicyTools.SUPPORT_CMDS.keys():
+  if options.command not in PolicyTools.SUPPORT_CMDS.keys() or options.command == 'help':
     parser.print_usage()
     sys.exit(0)
 
