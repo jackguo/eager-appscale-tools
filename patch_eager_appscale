@@ -1,0 +1,319 @@
+diff -ruNp original/eager-appscale/Eager/eager.py eager-appscale/Eager/eager.py
+--- original/eager-appscale/Eager/eager.py	2014-06-07 07:23:08.892186081 +0000
++++ eager-appscale/Eager/eager.py	2014-05-31 07:57:06.435413726 +0000
+@@ -123,6 +123,37 @@ class Eager:
+       detail = { 'detail' : message }
+       return self.__generate_response(False, self.REASON_API_PUBLISH_FAILED, detail)
+ 
++  def add_policy(self, secret, name, content, active):
++    if self.secret != secret:
++      return self.__generate_response(False, self.REASON_BAD_SECRET)
++
++    return  self.policy_engine.add_policy(name, content, active)
++
++  def remove_policy(self, secret, name):
++    if self.secret != secret:
++      return self.__generate_response(False, self.REASON_BAD_SECRET)
++    return self.policy_engine.remove_policy(name)
++
++  def enable_policy(self, secret, name):
++    if self.secret != secret:
++      return self.__generate_response(False, self.REASON_BAD_SECRET)
++    return self.policy_engine.enable_policy(name)
++
++  def disable_policy(self, secret, name):
++    if self.secret != secret:
++      return self.__generate_response(False, self.REASON_BAD_SECRET)
++    return self.policy_engine.disable_policy(name)
++
++  def list_policy(self, secret, status):
++     if self.secret != secret:
++      return self.__generate_response(False, self.REASON_BAD_SECRET)
++     return self.policy_engine.list_policy(status)
++
++  def info_policy(self, secret, name):
++    if self.secret != secret:
++      return self.__generate_response(False, self.REASON_BAD_SECRET)
++    return self.policy_engine.info_policy(name)
++
+   def __is_api_name_valid(self, name):
+     for char in "'/ &+*@%\"<>!,":
+       if char in name:
+diff -ruNp original/eager-appscale/Eager/eager_service.py eager-appscale/Eager/eager_service.py
+--- original/eager-appscale/Eager/eager_service.py	2014-06-07 07:23:08.892186081 +0000
++++ eager-appscale/Eager/eager_service.py	2014-05-31 07:59:47.622182177 +0000
+@@ -66,6 +66,13 @@ class EagerService:
+     self.server.registerFunction(e.ping)
+     self.server.registerFunction(e.validate_application_for_deployment)
+     self.server.registerFunction(e.publish_api_list)
++    self.server.registerFunction(e.add_policy)
++    self.server.registerFunction(e.remove_policy)
++    self.server.registerFunction(e.enable_policy)
++    self.server.registerFunction(e.disable_policy)
++    self.server.registerFunction(e.list_policy)
++    self.server.registerFunction(e.info_policy)
++ 
+     self.started = False
+ 
+   def start(self):
+diff -ruNp original/eager-appscale/Eager/policy/models.py eager-appscale/Eager/policy/models.py
+--- original/eager-appscale/Eager/policy/models.py	2014-06-07 07:23:08.956186078 +0000
++++ eager-appscale/Eager/policy/models.py	2014-05-31 08:29:20.351490360 +0000
+@@ -56,7 +56,8 @@ class Policy:
+ 
+   def __get_policy_name(self):
+     base_name = os.path.basename(self.policy_file)
+-    return os.path.splitext(base_name)[0]
++    return base_name.split('.')[0]
++#    return os.path.splitext(base_name)[0]
+ 
+   def __get_policy_content(self):
+     file_handle = open(self.policy_file, 'r')
+diff -ruNp original/eager-appscale/Eager/policy/policy_engine.py eager-appscale/Eager/policy/policy_engine.py
+--- original/eager-appscale/Eager/policy/policy_engine.py	2014-06-07 07:23:08.956186078 +0000
++++ eager-appscale/Eager/policy/policy_engine.py	2014-06-04 16:35:55.268777075 +0000
+@@ -3,6 +3,7 @@ import re
+ import sys
+ from policy.models import Policy, Application, API
+ from utils import utils
++from threading import Lock
+ 
+ class PolicyEngine:
+ 
+@@ -12,15 +13,26 @@ class PolicyEngine:
+     parent_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
+     self.policy_store_dir = os.path.join(parent_dir, self.POLICY_STORE_DIR)
+     self.active_policies = []
++    self.inactive_policies = []
++    self.lock = Lock()
++
+     if os.path.exists(self.policy_store_dir):
+       for policy_file in os.listdir(self.policy_store_dir):
+-        if policy_file.endswith('.py'):
++        if policy_file.endswith('.a.py'):
+           full_path = os.path.join(self.policy_store_dir, policy_file)
+           try:
+             policy = Policy(full_path)
+             self.active_policies.append(policy)
+           except Exception as ex:
+             utils.log("Error while loading policy '{0}': {1}".format(policy_file, str(ex)))
++        elif policy_file.endswith('.i.py'):
++          full_path = os.path.join(self.policy_store_dir, policy_file)
++          try:
++            policy = Policy(full_path)
++            self.inactive_policies.append(policy)
++          except Exception as ex:
++            utils.log("Error while loading policy '{0}': {1}".format(policy_file, str(ex)))
++
+     if self.active_policies:
+       msg_suffix = '1 policy'
+       if len(self.active_policies) > 1:
+@@ -29,7 +41,7 @@ class PolicyEngine:
+     else:
+       utils.log("No active policies found.")
+ 
+-  def run_policy_enforcement(self, name, version, dependencies, api_list, owner):
++  def __run_policy_enforcement(self, name, version, dependencies, api_list, owner):
+     if self.active_policies:
+       immutable_api_list = []
+       for api in api_list:
+@@ -42,33 +54,153 @@ class PolicyEngine:
+         return False, '|'.join(errors)
+     return True, None
+ 
+-  def add_policy(self, name, content):
++  def __add_policy(self, name, content, active):
+     regex = re.compile("^[a-zA-Z0-9_]+$")
+     if not regex.match(name):
+       return False, 'Invalid policy name: Only letters, digits and underscores are allowed'
+-    file_path = os.path.join(self.policy_store_dir, name + '.py')
+-    if os.path.exists(file_path):
+-      return False, 'Policy {0} already exists'.format(name)
++
++    reg_name = re.compile(name + '\\.([ai])\\.py')
++    for item in os.listdir(self.policy_store_dir):
++      if reg_name.match(item):
++       return False, 'Policy {0} already exists'.format(name)
++
++    if active:
++      file_path = os.path.join(self.policy_store_dir, name + '.a.py')
++    else:
++      file_path = os.path.join(self.policy_store_dir, name + '.i.py')
++
+     file_handle = open(file_path, 'w')
+     file_handle.write(content)
+     file_handle.flush()
+     file_handle.close()
+     try:
+       new_policy = Policy(file_path)
+-      self.active_policies.append(new_policy)
++      if active:
++        self.active_policies.append(new_policy)
++      else:
++        self.inactive_policies.append(new_policy)
+       return True, None
+     except Exception as ex:
+       os.remove(file_path)
+       return False, 'Error while parsing policy: {0}'.format(ex.message)
+ 
+-  def remove_policy(self, name):
+-    file_path = os.path.join(self.policy_store_dir, name + '.py')
+-    if os.path.exists(file_path):
+-      os.remove(file_path)
++  def __remove_policy(self, name):
++    reg_name = re.compile(name + '\\.([ai])\\.py')
++    for item in os.listdir(self.policy_store_dir):
++      match = reg_name.match(item)
++      if match:
++        break;
++
++    if not match:
++      return False, "Policy {0} is not found!".format(name)
++
++    path = os.path.join(self.policy_store_dir, name + '.' + match.groups()[0] + '.py')
++    os.remove(path)
++    if match.groups()[0] == 'a':
+       for p in self.active_policies:
+         if p.name == name:
+           self.active_policies.remove(p)
+-          break
+-      return True
+     else:
+-      return False
++      for p in self.inactive_policies:
++        if p.name == name:
++          self.inactive_policies.remove(p)
++    return True, "Policy removed successfully"
++
++  # Enable an inactive policy, this policy must exist in the policy store
++  def __enable_policy(self, name):
++    path = os.path.join(self.policy_store_dir, name + '.i.py')
++    if not os.path.exists(path):
++      return False, "Error while enabling policy: {0}, no such inactive policy!".format(name)
++
++    for p in self.inactive_policies:
++      if p.name == name:
++        try:
++          os.rename(path, os.path.join(self.policy_store_dir, name + '.a.py'))
++        except Exception as ex:
++          return False, "Erro while enabling policy: {0}, {1}".format(name, ex.message)
++        
++        self.active_policies.append(p)
++        self.inactive_policies.remove(p)
++        return True, None
++    # This should never happen:
++    return False, "Error while enabling policy: {0}, policy engine is not consistent!".format(name)
++
++
++  # Disable an active policy, this policy must exist in the policy store
++  def __disable_policy(self, name):
++    path = os.path.join(self.policy_store_dir, name + '.a.py')
++    if not os.path.exists(path):
++      return False, "Error while disabling policy: {0}, no such active policy!".format(name)
++
++    for p in self.active_policies:
++      if p.name == name:
++        try:
++          os.rename(path, os.path.join(self.policy_store_dir, name + '.i.py'))
++        except Exception as ex:
++          return False, "Error while disabling policy: {0}, {1}".format(name, ex.message)
++        self.inactive_policies.append(p)
++        self.active_policies.remove(p)
++        return True, None
++
++    #This should never happen:
++    return False, "Error while disabling policy: {0}, policy engine is not consistent!".format(name)
++
++  def __list_policy(self, status):
++    if status == 'active':
++      return [policy.name for policy in self.active_policies]
++
++    if status == "inactive":
++      return [policy.name  for policy in self.inactive_policies]
++
++    if status == "all":
++      return [policy.name for policy in self.active_policies + self.inactive_policies]
++
++  def __info_policy(self, name):
++    for p in self.active_policies + self.inactive_policies:
++      if p.name == name:
++        return (p.name, p.source_code)
++    return None
++
++  # Wrapper methods, added mutex
++  def run_policy_enforcement(self, name, version, dependencies, api_list, owner):
++    self.lock.acquire()
++    res = self.__run_policy_enforcement(name, version, dependencies, api_list, owner)
++    self.lock.release()
++    return res
++
++  def add_policy(self, name, content, active):
++    self.lock.acquire()
++    res = self.__add_policy(name, content, active)
++    self.lock.release()
++    return res
++
++  def remove_policy(self, name):
++    self.lock.acquire()
++    res = self.__remove_policy(name)
++    self.lock.release()
++    return res
++
++  def enable_policy(self, name):
++    self.lock.acquire()
++    res = self.__enable_policy(name)
++    self.lock.release()
++    return res
++
++  def disable_policy(self, name):
++    self.lock.acquire()
++    res = self.__disable_policy(name)
++    self.lock.release()
++    return res
++
++  def list_policy(self, status):
++    self.lock.acquire()
++    res = self.__list_policy(status)
++    self.lock.release()
++    utils.log(res[0])
++    return res
++
++  def info_policy(self, name):
++    self.lock.acquire()
++    res = self.__info_policy(name)
++    self.lock.release()
++    return res
+diff -ruNp original/eager-appscale/Eager/policystore/basic.a.py eager-appscale/Eager/policystore/basic.a.py
+--- original/eager-appscale/Eager/policystore/basic.a.py	1970-01-01 00:00:00.000000000 +0000
++++ eager-appscale/Eager/policystore/basic.a.py	2014-06-03 04:01:56.791809244 +0000
+@@ -0,0 +1,11 @@
++import re
++
++regex = re.compile('[A-Z].*')
++assert_true(regex.match(app.name), 'Application names must start with an uppercase letter')
++
++regex = re.compile('admin@test.com')
++assert_true(regex.match(app.owner), 'Application username must match admin@test.com')
++
++regex = re.compile('[A-Z].*')
++for api in app.api_list:
++  assert_true(regex.match(api.name), 'API names must start with an uppercase letter')
+diff -ruNp original/eager-appscale/Eager/tests/test_policy_engine.py eager-appscale/Eager/tests/test_policy_engine.py
+--- original/eager-appscale/Eager/tests/test_policy_engine.py	2014-06-07 07:23:08.964186081 +0000
++++ eager-appscale/Eager/tests/test_policy_engine.py	2014-05-29 21:19:27.822668949 +0000
+@@ -11,7 +11,7 @@ class TestPolicyEngine(TestCase):
+ 
+   def __add_policy(self, name, engine):
+     current_dir = os.path.dirname(os.path.abspath(__file__))
+-    full_path = os.path.join(current_dir, 'samples', name + '.py')
++    full_path = os.path.join(current_dir, 'samples', name + '.a.py')
+     policy = Policy(full_path)
+     engine.active_policies.append(policy)
+ 
+@@ -55,4 +55,4 @@ class TestPolicyEngine(TestCase):
+ 
+     api_list = [{'name' : 'Hello', 'version' : '1.0'}]
+     passed, message = engine.run_policy_enforcement('MyAPI', '1.0', [], api_list, 'admin@test.com')
+-    self.assertTrue(passed)
+\ No newline at end of file
++    self.assertTrue(passed)
